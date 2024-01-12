@@ -1,39 +1,35 @@
-import { configureStore } from '@reduxjs/toolkit'
-import { encryptTransform } from 'redux-persist-transform-encrypt';
-import createMigrate from 'redux-persist/es/createMigrate';
-import storage from "redux-persist/lib/storage";
+import { combineReducers, configureStore } from '@reduxjs/toolkit'
 
+import productRedux from '../redux/productRedux';
+import { createMigrate, persistReducer, persistStore } from 'redux-persist';
+import storage from "redux-persist/lib/storage";
 const migrations = {
-  2:()=>{
-    if (window.location.href.split("/")[3] !== '') {
-      window.location.href = "/"
-    }
+  0: () => {
+    // if (window.location.href.split("/")[3] !== '') {
+    //   window.location.href = "/"
+    // }
     return undefined;
   }
 }
 
-
 const persistConfig = {
   key: "root",
-  version: 2,
+  version: 0,
   storage,
   migrate: createMigrate(migrations, { debug: false }),
-  transforms: [
-    encryptTransform({
-      secretKey: 'my-super-secret-key',
-      onError: function () {
-        sessionStorage.removeItem('state')
-      },
-    }),
-  ],
-  
 };
 
+const rootReducer = combineReducers({
+  productRedux: productRedux,
+});
 
-const store = configureStore({
-  reducer: {
-  },
-})
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+export const store = configureStore({
+  reducer: persistedReducer
+});
+
+export const persistor = persistStore(store);
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>
